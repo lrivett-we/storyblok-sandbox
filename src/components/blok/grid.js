@@ -7,7 +7,7 @@ const GridBlok = (props) => (
   <SbEditable content={props.blok}>
     <Grid>
       {props.blok.columns.map((blok) =>
-        React.createElement(Components[blok.component], {key: blok._uid, blok: blok})
+        React.createElement(Components[blok.component], {key: blok._uid, blok: blok, global: props.global})
       )}
     </Grid>
   </SbEditable>

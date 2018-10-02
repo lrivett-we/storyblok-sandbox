@@ -47,9 +47,14 @@ class StoryblokEntry extends React.Component {
     window.storyblok.get({
       slug: "___global/toolbar",
       version: "draft",
-    }, (data) => {
-      const global = {toolbar: data.story.content};
-      this.setState({story, global});
+    }, (toolbar) => {
+      window.storyblok.get({
+        slug: "___global/globe",
+        version: "draft",
+      }, (globe) => {
+        const global = {toolbar: toolbar.story.content, globe: globe.story.content};
+        this.setState({story, global});
+      });
     });
   }
 

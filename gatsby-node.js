@@ -11,7 +11,7 @@ exports.createPages = ({ graphql, actions }) => {
         allStoryblokEntry(
           filter: {
             full_slug: { 
-              in: ["___global/toolbar"]
+              in: ["___global/toolbar", "___global/globe"]
             }
           }
         ) {
