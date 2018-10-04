@@ -8,4 +8,15 @@ const FeatureBlok = (props) => (
   </SbEditable>
 );
 
+FeatureBlok.blokSettings = {
+  display_name: "Feature",
+  is_root: false,
+  is_nestable: true,
+  schema: {
+    name: {
+      type: "text"
+    }
+  }
+};
+
 export default FeatureBlok;

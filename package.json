@@ -12,6 +12,7 @@
     "react": "^16.4.2",
     "react-dom": "^16.4.2",
     "react-helmet": "^5.2.0",
+    "storyblok-js-client": "^1.0.20",
     "storyblok-react": "^0.0.6"
   },
   "keywords": [

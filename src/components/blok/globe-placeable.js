@@ -12,4 +12,11 @@ const GlobePlaceableBlok = (props) => {
   )
 };
 
+GlobePlaceableBlok.blokSettings = {
+  display_name: "Globe",
+  is_root: false,
+  is_nestable: true,
+  schema: {}
+};
+
 export default GlobePlaceableBlok;

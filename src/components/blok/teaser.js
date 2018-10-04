@@ -8,4 +8,16 @@ const TeaserBlok = (props) => (
   </SbEditable>
 );
 
+TeaserBlok.blokSettings = {
+  display_name: "Teaser",
+  is_root: false,
+  is_nestable: true,
+  schema: {
+    name: {
+      type: "text",
+      pos: 0,
+    },
+  },
+};
+
 export default TeaserBlok;

@@ -1,3 +1,4 @@
+import BadFeature from "./blok/bad-feature";
 import Feature from "./blok/feature";
 import GlobePlaceable from "./blok/globe-placeable";
 import Grid from "./blok/grid";
@@ -8,13 +9,19 @@ import Page from "./content/page";
 import Globe from "./global/globe";
 import Toolbar from "./global/toolbar";
 
+import { updateStoryblok } from "../storyblok-scripts/storyblok-update";
 
-export default {
+const components = {
+  badFeature: BadFeature,
   feature: Feature,
-  globePlaceable: GlobePlaceable,
+  globe: GlobePlaceable,
   grid: Grid,
   teaser: Teaser,
   page: Page,
   globeGlobal: Globe,
   toolbar: Toolbar,
 };
+
+updateStoryblok(components);
+
+export default components;
