@@ -1,4 +1,4 @@
-import StoryblokClient from "storyblok-js-client"
+import StoryblokClient from "storyblok-js-client";
 
 const spaceId = 48829;
 const oauthToken = "Ks6V17DkmpPuaR0ngE0pXAtt-45470--xRoHE1ftj4Xe8eTxqzo";

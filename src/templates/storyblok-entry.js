@@ -14,7 +14,7 @@ class StoryblokEntry extends React.Component {
     const story = Object.assign({}, props.pageContext.story);
     story.content = JSON.parse(story.content);
     
-    const globalNodes = props.pathContext.globalNodes;
+    const globalNodes = props.pageContext.globalNodes;
     let global = {};
     for (var slug in globalNodes) {
       global[slug] = JSON.parse(globalNodes[slug].content);
