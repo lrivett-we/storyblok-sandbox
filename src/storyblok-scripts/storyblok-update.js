@@ -3,37 +3,115 @@ import StoryblokClient from "storyblok-js-client";
 const spaceId = 48829;
 const oauthToken = "Ks6V17DkmpPuaR0ngE0pXAtt-45470--xRoHE1ftj4Xe8eTxqzo";
 
-const renameComponent = (Storyblok, oldName, newName) => {
-  const replace = (component) => {
-    if (component.component && component.component === oldName) {
-      component.component = newName;
+const updateComponentsFunction = (componentType, operation) => {
+  const recurse = (component) => {
+    if (component.component && component.component === componentType) {
+      operation(component);
     }
     for (let value of Object.values(component)) {
       if (typeof value === "object" && value != null) {
         if (value instanceof Array) {
           for (let object of value) {
-            replace(object);
+            recurse(object);
           }
         }
         else {
-          replace(value);
+          recurse(value);
         }
       }
     }
-  };
-  Storyblok.get(`spaces/${spaceId}/stories?contain_component=${oldName}`)
-    .then((response) => {
-      for (let story of response.data.stories) {
-        Storyblok.get(`spaces/${spaceId}/stories/${story.id}`)
-          .then((response) => {
-            let story = response.data.story;
-            replace(story.content);
-            Storyblok.put(`spaces/${spaceId}/stories/${story.id}`, {"story": story})
+  }
+  return recurse;
+}
+
+const renameComponent = (Storyblok, oldName, newName) => {
+  const replace = updateComponentsFunction(oldName, (component) => { component.component = newName; });
+  
+  return new Promise((resolve, reject) => {
+    Storyblok.get(`spaces/${spaceId}/stories?contain_component=${oldName}`)
+      .then((response) => {
+        let storyUpdates = [];
+        for (let story of response.data.stories) {
+          storyUpdates.push(new Promise((resolve2, reject2) => {
+            Storyblok.get(`spaces/${spaceId}/stories/${story.id}`)
               .then((response) => {
+                let story = response.data.story;
+                replace(story.content);
+                Storyblok.put(`spaces/${spaceId}/stories/${story.id}`, {"story": story})
+                  .then((response) => {
+                    resolve2(response);
+                  });
               });
+          }));
+        }
+        Promise.all(storyUpdates)
+          .then(() => {
+            resolve();
           });
+      });
+  });
+}
+
+// For now, the migration property is called "migration_init". We can change this later. 
+const performFieldMigration = (Storyblok, blokName, schema) => {
+  const refactor = updateComponentsFunction(blokName, (component) => {
+    for (let field in schema) {
+      const fieldSchema = schema[field];
+      if (fieldSchema.hasOwnProperty("migration_init") && !component.hasOwnProperty(field)){
+        const migration = fieldSchema.migration_init;
+        // If the migration object has a rename property, take the value of the new field from the old field.
+        if (migration.rename) {
+          // If we want to take a migration value from one of multiple fields, we can list them.
+          if (migration.rename instanceof Array) {
+            for (let renameField of migration.rename) {
+              if (component.hasOwnProperty(renameField) && !component.hasOwnProperty(field)) {
+                component[field] = component[renameField];
+                break;
+              }
+            }
+          }
+          else if (component.hasOwnProperty(migration.rename)) {
+            component[field] = component[migration.rename];
+          }
+        }
+        // If the migration object has an initialize property, use it to initialize the field.
+        else if (migration.initialize) {
+          component[field] = migration.initialize(component);
+        }
       }
-    });
+      // TODO - decide whether or not we ever want to remove fields.
+      if (fieldSchema.migration_init && fieldSchema.migration_init.replace) {
+        if (component.hasOwnProperty(field)) {
+          for (let replacedField of fieldSchema.migration_init.replace) {
+            delete component[replacedField];
+          }
+        }
+      }
+    }
+  });
+  return new Promise((resolve, reject) => {
+    Storyblok.get(`spaces/${spaceId}/stories?contain_component=${blokName}`)
+      .then((response) => {
+        let storyUpdates = [];
+        for (let story of response.data.stories) {
+          storyUpdates.push(new Promise((resolve2, reject2) => {
+            Storyblok.get(`spaces/${spaceId}/stories/${story.id}`)
+              .then((response) => {
+                let story = response.data.story;
+                refactor(story.content);
+                Storyblok.put(`spaces/${spaceId}/stories/${story.id}`, {"story": story})
+                  .then((response) => {
+                    resolve2(response);
+                  });
+              });
+          }));
+        }
+        Promise.all(storyUpdates)
+          .then(() => {
+            resolve();
+          });
+      });
+  });
 }
 
 // To rename a component, keep the old name in the components dictionary and pass {renamed: "newName"};
@@ -110,18 +188,36 @@ const updateStoryblok = (components) => {
       }
     }
     // Rename all components as needed within stories.
+    let renames = [];
     for (let componentName in components) {
       if (components[componentName].renamed) {
         let newComponentName = components[componentName].renamed;
         if (components[newComponentName].renamed) {
           newComponentName = components[newComponentName].renamed;
         }
-        renameComponent(Storyblok, componentName, newComponentName);
+        renames.push(renameComponent(Storyblok, componentName, newComponentName));
       }
     }
-  })
-  .catch((error) => {
-    // TODO - what do do here?
+    // After performing all rename operations, perform schema field migration.
+    Promise.all(renames)
+      .then(() => {
+        let refactors = [];
+        for (let componentName in components) {
+          if (!components[componentName].renamed) {
+            let migrationNeeded = false;
+            const schema = components[componentName].blokSettings.schema;
+            for (let field in schema) {
+              if (schema[field].migration_init) {
+                migrationNeeded = true;
+              }
+            }
+            if (migrationNeeded) {
+              refactors.push(performFieldMigration(Storyblok, componentName, components[componentName].blokSettings.schema));
+            }
+          }
+        }
+        Promise.all(refactors).then(() => {});
+      });
   });
 }
 

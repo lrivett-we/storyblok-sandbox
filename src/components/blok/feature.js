@@ -14,9 +14,9 @@ FeatureBlok.blokSettings = {
   is_nestable: true,
   schema: {
     name: {
-      type: "text"
-    }
-  }
+      type: "text",
+    },
+  },
 };
 
 export default FeatureBlok;
