@@ -13,7 +13,7 @@ TeaserBlok.blokSettings = {
   is_root: false,
   is_nestable: true,
   schema: {
-    name: {
+    headline: {
       type: "text",
       pos: 0,
     },
