@@ -64,7 +64,7 @@ const updateComponentsInStoryContent = (content, components) => {
             updateComponentsInStoryContent(object, components);
           }
         });
-        deleteList.forEach((index) => { delete value[index]; })
+        //deleteList.forEach((index) => { delete value[index]; })
       }
       else {
         if (value.component && components.hasOwnProperty(value.component)) {
@@ -76,7 +76,7 @@ const updateComponentsInStoryContent = (content, components) => {
       }
     }
   });
-  deleteKeyList.forEach((key) => { delete content[key]; })
+  //deleteKeyList.forEach((key) => { delete content[key]; })
 }
 
 const getComponentUpdates = (liveComponents, sourceComponents) => {
