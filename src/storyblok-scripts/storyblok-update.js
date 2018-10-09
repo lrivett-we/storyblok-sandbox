@@ -51,32 +51,18 @@ const updateComponentsInStoryContent = (content, components) => {
       });
     }
   }
-  let deleteKeyList = [];
   Object.values(content).forEach((value, key) => {
-    if (value instanceof Object) {
+    if (value instanceof Object && value !== null) {
       if (value instanceof Array) {
-        let deleteList = [];
         value.forEach((object, index) => {
-          if (object.component && components.hasOwnProperty(object.component)) {
-            deleteList.push(index);
-          }
-          else {
-            updateComponentsInStoryContent(object, components);
-          }
+          updateComponentsInStoryContent(object, components);
         });
-        //deleteList.forEach((index) => { delete value[index]; })
       }
       else {
-        if (value.component && components.hasOwnProperty(value.component)) {
-          deleteKeyList.push(key);
-        }
-        else {
-          updateComponentsInStoryContent(value, components);
-        }
+        updateComponentsInStoryContent(value, components);
       }
     }
   });
-  //deleteKeyList.forEach((key) => { delete content[key]; })
 }
 
 const getComponentUpdates = (liveComponents, sourceComponents) => {
