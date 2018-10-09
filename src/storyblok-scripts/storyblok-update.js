@@ -215,8 +215,6 @@ const updateStoryblok = async (components) => {
   const componentResponses = await updateStoryblokComponents(Storyblok, components);
   if (componentResponses == null) return;
   const stories = await updateStoryblokStories(Storyblok, components);
-  console.log(componentResponses);
-  console.log(stories);
 }
 
 export { updateStoryblok };
