@@ -55,11 +55,21 @@ const updateComponentsInStoryContent = (content, components) => {
     if (value instanceof Object && value !== null) {
       if (value instanceof Array) {
         value.forEach((object, index) => {
-          updateComponentsInStoryContent(object, components);
+          if (object === null || (object.component && !components.hasOwnProperty(object.component))){
+            value.splice(index, 1);
+          }
+          else {
+            updateComponentsInStoryContent(object, components);
+          }
         });
       }
       else {
-        updateComponentsInStoryContent(value, components);
+        if (value.component && !components.hasOwnProperty(value.component)){
+          delete content[key];
+        }
+        else {
+          updateComponentsInStoryContent(value, components);
+        }
       }
     }
   });
@@ -89,18 +99,10 @@ const getComponentUpdates = (liveComponents, sourceComponents) => {
       if (circular) {
         // If there is a circular name reference, then there is no component being referred to. This should not happen.
         deleteItems.push(liveComponent);
-        return;
       }
-      if (Comp.deprecated) {
-        let newSettings = liveComponent;
-        newSettings.schema = {};
-        if (Comp.deprecated === true) {
-          newSettings.display_name = `DEPRECATED`;
-        }
-        else {
-          newSettings.display_name = `DEPRECATED - ${Comp.deprecated}`;
-        }
-        putItems.push(newSettings);
+      else if (Comp.deprecated) {
+        // If the component is deprecated, remove it from the Storyblok model.
+        deleteItems.push(liveComponent);
       }
       else {
         componentsPresent[componentName] = true;
@@ -158,9 +160,17 @@ const updateStoryblokComponents = async (Storyblok, components) => {
 
 const getUpdatedStories = (stories, sourceComponents) => {
   return stories.map((story) => {
-    let newStory = JSON.parse(JSON.stringify(story));
-    updateComponentsInStoryContent(newStory.content, sourceComponents)
-    return newStory;
+    if (sourceComponents.hasOwnProperty(story.content.component)) {
+      let newStory = JSON.parse(JSON.stringify(story));
+      updateComponentsInStoryContent(newStory.content, sourceComponents)
+      return newStory;
+    }
+    else if (story.content.component === "root") {
+      return story;
+    }
+    else {
+      return {deleteId: story.id};
+    }
   });
 }
 
@@ -179,12 +189,17 @@ const updateStoryblokStories = async (Storyblok, components) => {
   let stories = storyResponses.map((storyResponse) => storyResponse.data.story);
   stories = getUpdatedStories(stories, components);
 
-  const storyPutRequests = stories.map((story) =>  {
-    return Storyblok.put(`spaces/${spaceId}/stories/${story.id}`, {story})
+  const storyUpdateRequests = stories.map((story) =>  {
+    if (story.deleteId) {
+      return Storyblok.delete(`spaces/${spaceId}/stories/${story.deleteId}`, null);
+    }
+    else {
+      return Storyblok.put(`spaces/${spaceId}/stories/${story.id}`, {story})
+    }
   });
 
   try {
-    return await Promise.all(storyPutRequests);
+    return await Promise.all(storyUpdateRequests);
   } 
   catch (error) {
     console.error(error);
@@ -199,7 +214,7 @@ const updateStoryblok = async (components) => {
   let Storyblok = new StoryblokClient({oauthToken});
 
   const componentResponses = await updateStoryblokComponents(Storyblok, components);
-  if (componentResponses == null || componentResponses == []) return;
+  if (componentResponses === null || componentResponses === []) return;
   await updateStoryblokStories(Storyblok, components);
 }
 
