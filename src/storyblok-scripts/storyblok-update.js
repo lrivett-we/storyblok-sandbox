@@ -199,8 +199,8 @@ const updateStoryblok = async (components) => {
   let Storyblok = new StoryblokClient({oauthToken});
 
   const componentResponses = await updateStoryblokComponents(Storyblok, components);
-  if (componentResponses == null) return;
-  const stories = await updateStoryblokStories(Storyblok, components);
+  if (componentResponses == null || componentResponses == []) return;
+  await updateStoryblokStories(Storyblok, components);
 }
 
 export { updateStoryblok };
