@@ -22,6 +22,6 @@ const components = {
   toolbar: Toolbar,
 };
 
-updateStoryblok(components);
+// updateStoryblok(components);
 
 export default components;
